@@ -321,6 +321,35 @@
     .cal-day { min-height: 60px; padding: 5px; }
     .page-heading { font-size: 26px; }
   }
+
+  /* ── API Key Modal ── */
+  .apikey-overlay {
+    position: fixed; inset: 0; background: rgba(43,20,12,0.55); z-index: 9999;
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+    backdrop-filter: blur(4px);
+  }
+  .apikey-card {
+    background: var(--surface); border: 1px solid var(--border2);
+    border-radius: var(--radius); padding: 32px 28px; width: 100%; max-width: 420px;
+    box-shadow: var(--shadow-lg); text-align: center;
+  }
+  .apikey-card h2 { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-style: italic; color: #CE5A43; margin-bottom: 8px; }
+  .apikey-card p { font-size: 13px; color: var(--text2); line-height: 1.7; margin-bottom: 22px; }
+  .apikey-input-wrap { position: relative; margin-bottom: 10px; }
+  .apikey-input-wrap input { padding-right: 44px; font-family: 'Jost', sans-serif; letter-spacing: 0.03em; text-align: left; }
+  .apikey-toggle { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text3); padding: 4px; line-height: 1; }
+  .apikey-toggle:hover { color: #CE5A43; }
+  .apikey-hint { font-size: 12px; color: var(--text3); margin-bottom: 22px; line-height: 1.7; }
+  .apikey-hint a { color: #CE5A43; text-decoration: none; font-weight: 500; }
+  .apikey-hint a:hover { text-decoration: underline; }
+  .apikey-privacy { font-size: 11px; color: var(--text3); margin-top: 14px; line-height: 1.6; }
+
+  .nav-settings-btn {
+    background: none; border: 1.5px solid var(--border2); border-radius: 10px;
+    color: var(--text3); cursor: pointer; width: 38px; height: 38px;
+    display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0;
+  }
+  .nav-settings-btn:hover { background: #fff2ec; border-color: #F09367; color: #CE5A43; }
 </style>
 </head>
 <body>
@@ -340,9 +369,16 @@
       </svg>
       <div class="nav-brand">Peach & Power<span>nutrition · fitness · you</span></div>
     </a>
-    <button class="nav-hamburger" id="nav-ham" onclick="toggleNav()" aria-label="Menu">
-      <span></span><span></span><span></span>
-    </button>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <button class="nav-settings-btn" onclick="showApiKeyModal()" title="API Key Settings">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="10" cy="10" r="3"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42"/>
+        </svg>
+      </button>
+      <button class="nav-hamburger" id="nav-ham" onclick="toggleNav()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
   </nav>
 
   <div class="nav-dropdown" id="nav-dropdown">
@@ -708,7 +744,83 @@
   </div>
 </div>
 
+<!-- API Key Modal -->
+<div class="apikey-overlay" id="apikey-overlay" style="display:none;">
+  <div class="apikey-card">
+    <div class="apikey-logo">
+      <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none" width="56" height="56">
+        <rect width="64" height="64" rx="14" fill="#F09367"/>
+        <rect x="20" y="10" width="24" height="10" rx="5" stroke="white" stroke-width="2.5" fill="none"/>
+        <rect x="24" y="14" width="16" height="8" rx="3" stroke="white" stroke-width="2" fill="none"/>
+        <path d="M12 30 Q12 20 22 20 Q28 20 32 26 Q36 20 42 20 Q52 20 52 30 Q52 44 32 54 Q12 44 12 30Z" stroke="white" stroke-width="2.5" fill="none" stroke-linejoin="round"/>
+        <path d="M32 26 Q38 32 36 42" stroke="white" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.6"/>
+      </svg>
+    </div>
+    <h2>Peach & Power</h2>
+    <p>Enter your Anthropic API key to start generating recipes. It's saved only on this device — never sent anywhere except directly to Anthropic.</p>
+    <div class="apikey-input-wrap">
+      <input type="password" id="apikey-input" placeholder="sk-ant-api03-..." autocomplete="off" autocorrect="off" spellcheck="false"/>
+      <button class="apikey-toggle" onclick="toggleKeyVisibility()" id="apikey-eye" title="Show/hide key">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+          <path d="M2 10s3-6 8-6 8 6 8 6-3 6-8 6-8-6-8-6z"/><circle cx="10" cy="10" r="2.5"/>
+        </svg>
+      </button>
+    </div>
+    <p class="apikey-hint">
+      Get a free key at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a><br>
+      You'll need to add a small amount of credit (a few dollars lasts months).
+    </p>
+    <button class="btn btn-primary" style="width:100%; justify-content:center; padding:13px;" onclick="saveApiKey()">
+      Save & Start Cooking 🍑
+    </button>
+    <p class="apikey-privacy">🔒 Stored only in this browser's local storage. Never shared.</p>
+  </div>
+</div>
+
 <script>
+// ── API Key management ─────────────────────────────────────────────────────
+function getApiKey() { return localStorage.getItem('pp_api_key') || ''; }
+
+function saveApiKey() {
+  const key = document.getElementById('apikey-input').value.trim();
+  if (!key.startsWith('sk-ant-')) {
+    document.getElementById('apikey-input').style.borderColor = '#CE5A43';
+    document.getElementById('apikey-input').placeholder = 'Key must start with sk-ant-...';
+    return;
+  }
+  localStorage.setItem('pp_api_key', key);
+  document.getElementById('apikey-overlay').style.display = 'none';
+  toast('API key saved! Ready to cook 🍑');
+}
+
+function showApiKeyModal() {
+  const overlay = document.getElementById('apikey-overlay');
+  overlay.style.display = 'flex';
+  const existing = getApiKey();
+  if (existing) {
+    document.getElementById('apikey-input').value = existing;
+  }
+}
+
+function toggleKeyVisibility() {
+  const inp = document.getElementById('apikey-input');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+function checkApiKeyOnLoad() {
+  if (!getApiKey()) {
+    document.getElementById('apikey-overlay').style.display = 'flex';
+  }
+}
+
+// Allow pressing Enter in the key field
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('apikey-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') saveApiKey();
+  });
+  checkApiKeyOnLoad();
+});
+
 // ── State ──────────────────────────────────────────────────────────────────
 const STATE = {
   savedRecipes: JSON.parse(localStorage.getItem('mc_recipes') || '[]'),
@@ -915,9 +1027,16 @@ Respond ONLY with a valid JSON array of exactly 5 recipe objects (no markdown, n
 ]`;
 
   try {
+    const apiKey = getApiKey();
+    if (!apiKey) { showApiKeyModal(); STATE.generatingRecipe = false; btn.disabled = false; btn.textContent = '✨ Generate 5 Recipes'; return; }
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 7000,
@@ -938,7 +1057,11 @@ Respond ONLY with a valid JSON array of exactly 5 recipe objects (no markdown, n
     });
     renderMultiRecipeOutput(recipes, servings);
   } catch (e) {
-    out.innerHTML = `<div class="card" style="border-color:rgba(217,95,95,0.4); color:var(--red);">Error generating recipes. Please try again. (${e.message})</div>`;
+    const isAuthErr = e.message?.includes('401') || e.message?.includes('403') || e.message?.toLowerCase().includes('auth');
+    const msg = isAuthErr
+      ? 'Invalid or missing API key. Tap the ⚙️ icon in the top right to update it.'
+      : `Error generating recipes. Please try again. (${e.message})`;
+    out.innerHTML = `<div class="card" style="border-color:rgba(206,90,67,0.4); color:#CE5A43; padding:20px; line-height:1.6;">${msg}</div>`;
   } finally {
     STATE.generatingRecipe = false;
     btn.disabled = false;
