@@ -1038,15 +1038,35 @@ Respond ONLY with a valid JSON array of exactly 5 recipe objects (no markdown, n
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-5',
         max_tokens: 7000,
         messages: [{ role: 'user', content: prompt }]
       })
     });
+    if (!resp.ok) {
+      const errData = await resp.json().catch(() => ({}));
+      const errMsg = errData?.error?.message || `HTTP ${resp.status}`;
+      if (resp.status === 401 || resp.status === 403) throw new Error('AUTH:' + errMsg);
+      throw new Error(errMsg);
+    }
     const data = await resp.json();
     const text = data.content?.map(c => c.text || '').join('') || '';
-    const clean = text.replace(/```json|```/g, '').trim();
-    const recipes = JSON.parse(clean);
+    // Robustly extract JSON array from response
+    let clean = text;
+    // Strip markdown code fences
+    clean = clean.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+    // Find the first [ and last ] to extract just the array
+    const arrStart = clean.indexOf('[');
+    const arrEnd = clean.lastIndexOf(']');
+    if (arrStart === -1 || arrEnd === -1) throw new Error('No recipe data returned. Try again.');
+    clean = clean.slice(arrStart, arrEnd + 1);
+    let recipes;
+    try {
+      recipes = JSON.parse(clean);
+    } catch (parseErr) {
+      throw new Error('Could not read recipes. Please try again.');
+    }
+    if (!Array.isArray(recipes) || recipes.length === 0) throw new Error('No recipes returned. Please try again.');
     const now = Date.now();
     recipes.forEach((r, i) => {
       r.id = now + i;
@@ -1057,10 +1077,10 @@ Respond ONLY with a valid JSON array of exactly 5 recipe objects (no markdown, n
     });
     renderMultiRecipeOutput(recipes, servings);
   } catch (e) {
-    const isAuthErr = e.message?.includes('401') || e.message?.includes('403') || e.message?.toLowerCase().includes('auth');
+    const isAuthErr = e.message?.startsWith('AUTH:') || e.message?.includes('401') || e.message?.includes('403');
     const msg = isAuthErr
-      ? 'Invalid or missing API key. Tap the ⚙️ icon in the top right to update it.'
-      : `Error generating recipes. Please try again. (${e.message})`;
+      ? 'Invalid API key. Tap the ⚙️ icon to update it.'
+      : `Error: ${e.message}`;
     out.innerHTML = `<div class="card" style="border-color:rgba(206,90,67,0.4); color:#CE5A43; padding:20px; line-height:1.6;">${msg}</div>`;
   } finally {
     STATE.generatingRecipe = false;
